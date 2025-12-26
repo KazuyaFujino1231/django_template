@@ -33,3 +33,6 @@ python manage.py runserver 0.0.0.0:8000
   - PATCH `/api/todos/1/` `{ "is_done": true }`
 
 ブラウザからも DRF のブラウザブル API で操作できます。
+
+## TODO
+- Sphinx を導入して開発者向けドキュメントを自動生成できるようにする（Docstring を反映する形でHTML化）。
