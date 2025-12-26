@@ -25,7 +25,7 @@ class TodoViewSet(
     serializer_class = TodoSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = apply_list_logic(self.filter_queryset(self.get_queryset()), request)
+        queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -34,14 +34,14 @@ class TodoViewSet(
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        instance = apply_detail_logic(self.get_object(), request)
+        instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        apply_create_logic(serializer, request)
+        serializer.save()
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -50,29 +50,9 @@ class TodoViewSet(
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        apply_update_logic(serializer, request)
+        serializer.save()
         return Response(serializer.data)
 
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
-
-
-def apply_list_logic(queryset, request):
-    """Hook for list-time business logic (e.g., filtering, ordering tweaks)."""
-    return queryset
-
-
-def apply_detail_logic(todo: Todo, request):
-    """Hook for detail-time business logic (e.g., access control, masking fields)."""
-    return todo
-
-
-def apply_create_logic(serializer, request):
-    """Hook for create-time business logic (e.g., defaults, side effects)."""
-    serializer.save()
-
-
-def apply_update_logic(serializer, request):
-    """Hook for update-time business logic (e.g., validation, state transitions)."""
-    serializer.save()
