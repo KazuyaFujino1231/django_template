@@ -2,17 +2,36 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env if present (development use).
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
-DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
+DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set.")
+
 ALLOWED_HOSTS = [
-    host.strip() for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+    host.strip()
+    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if host.strip()
 ]
+
+# In production, refuse to run with permissive defaults.
+if not DEBUG:
+    if not ALLOWED_HOSTS:
+        raise ImproperlyConfigured(
+            "DJANGO_ALLOWED_HOSTS must be set to explicit hostnames in production."
+        )
+    if ALLOWED_HOSTS == ["*"]:
+        raise ImproperlyConfigured(
+            "DJANGO_ALLOWED_HOSTS cannot be '*' when DEBUG is False. "
+            "Set explicit hostnames (e.g., example.com, www.example.com)."
+        )
 
 INSTALLED_APPS = [
     "django.contrib.admin",
